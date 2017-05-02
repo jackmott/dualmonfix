@@ -36,6 +36,12 @@ Win32MainWindowCallback(HWND Window,
 
 vector<MONITORINFO> monitors;
 
+BOOL DoOverlap(int firstA, int secondA, int firstB, int secondB)
+{
+	if (firstB >= secondA || secondB <= firstA) return false;
+
+}
+
 MONITORINFO GetMonitor(const POINT &p)
 {
 	for (auto m : monitors)
@@ -51,7 +57,7 @@ MONITORINFO GetMonitor(const POINT &p)
 	}
 }
 
-BOOL GetClosestHorizMonitor(const POINT &p, MONITORINFO *closest)
+BOOL GetClosestHorizMonitor(const POINT &p, MONITORINFO *closest, const MONITORINFO &current)
 {
 	bool found = false;
 	int closeDist = 9999999;
@@ -72,7 +78,7 @@ BOOL GetClosestHorizMonitor(const POINT &p, MONITORINFO *closest)
 			int distTop = abs(p.y - m.rcMonitor.top);
 			int distBottom = abs(p.y - m.rcMonitor.bottom);
 			int dist = min(distTop, distBottom);
-			if (dist < closeDist)
+			if (dist < closeDist && DoOverlap(m.rcMonitor.top, m.rcMonitor.bottom, current.rcMonitor.top, current.rcMonitor.bottom))
 			{
 				closeDist = dist;
 				*closest = m;
@@ -84,7 +90,7 @@ BOOL GetClosestHorizMonitor(const POINT &p, MONITORINFO *closest)
 
 }
 
-BOOL GetClosestVertMonitor(const POINT &p, MONITORINFO *closest)
+BOOL GetClosestVertMonitor(const POINT &p, MONITORINFO *closest, const MONITORINFO &current)
 {
 	bool found = false;
 	int closeDist = 9999999;
@@ -105,7 +111,7 @@ BOOL GetClosestVertMonitor(const POINT &p, MONITORINFO *closest)
 			int distLeft = abs(p.x - m.rcMonitor.left);
 			int distRight = abs(p.x - m.rcMonitor.right);
 			int dist = min(distLeft, distRight);
-			if (dist < closeDist)
+			if (dist < closeDist && DoOverlap(m.rcMonitor.left, m.rcMonitor.right, current.rcMonitor.left, current.rcMonitor.right))
 			{
 				closeDist = dist;
 				*closest = m;
@@ -161,7 +167,7 @@ WinMain(HINSTANCE Instance,
 				newPoint.x++;
 			}
 			MONITORINFO nextMonitor;
-			if (GetClosestHorizMonitor(newPoint, &nextMonitor)) {
+			if (GetClosestHorizMonitor(newPoint, &nextMonitor,monitor)) {
 				if (point.y < nextMonitor.rcMonitor.top)
 				{
 					newPoint.y = nextMonitor.rcMonitor.top;
@@ -186,7 +192,8 @@ WinMain(HINSTANCE Instance,
 				newPoint.y++;
 			}
 			MONITORINFO nextMonitor;
-			if (GetClosestVertMonitor(newPoint, &nextMonitor)) {
+			if (GetClosestVertMonitor(newPoint, &nextMonitor, monitor)) {
+				
 				if (point.x < nextMonitor.rcMonitor.left)
 				{
 					newPoint.x = nextMonitor.rcMonitor.left;
